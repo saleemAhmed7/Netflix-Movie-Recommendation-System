@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5 pt-5 pb-5">
+    <div class="text-center mb-5 pb-3" data-aos="fade-down">
+        <h2 class="section-title text-white">{{ t('Find Your Next Watch') }}</h2>
+        <p class="text-muted fs-5">Tell us what you like, and our KNN algorithm will do the rest.</p>
+    </div>
+
+    <div class="row g-5">
+        <!-- Filter Sidebar -->
+        <div class="col-lg-4" data-aos="fade-right" data-aos-delay="100">
+            <div class="glass-card p-4 sticky-top" style="top: 100px;">
+                <h4 class="mb-4 text-white font-weight-bold">
+                    <i class="fa-solid fa-sliders text-danger me-2"></i> {{ t('Filters') }}
+                </h4>
+
+                <form method="POST" action="/recommend" id="recommendationForm">
+                    <!-- Movie Name for KNN -->
+                    <div class="mb-4">
+                        <label for="movie_name" class="form-label">{{ t('Based on a movie you like') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"
+                                style="border-color: rgba(255,255,255,0.1); color: var(--text-muted);">
+                                <i class="fa-solid fa-film"></i>
+                            </span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="movie_name"
+                                name="movie_name" placeholder="e.g. Toy Story">
+                        </div>
+                        <small class="text-muted mt-1 d-block"><i class="fa-solid fa-circle-info me-1"></i>Uses KNN to
+                            find similar movies.</small>
+                    </div>
+
+                    <hr class="border-secondary my-4" style="opacity: 0.3;">
+
+                    <!-- Filters -->
+                    <div class="mb-3">
+                        <label for="genre" class="form-label">{{ t('Genre') }}</label>
+                        <select class="form-select" id="genre" name="genre">
+                            <option value="">Any Genre</option>
+                            {% for g in genres %}
+                            <option value="{{ g }}">{{ g }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="min_rating" class="form-label">{{ t('Minimum Rating (0-5)') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0"
+                                style="border-color: rgba(255,255,255,0.1); color: var(--accent-amber);">
+                                <i class="fa-solid fa-star"></i>
+                            </span>
+                            <input type="number" class="form-control border-start-0 ps-0" id="min_rating"
+                                name="min_rating" min="0" max="5" step="0.5" placeholder="e.g. 4.0">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label for="year_start" class="form-label">{{ t('From Year') }}</label>
+                            <select class="form-select" id="year_start" name="year_start">
+                                <option value="">Any</option>
+                                {% for y in years %}
+                                <option value="{{ y }}">{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="year_end" class="form-label">{{ t('To Year') }}</label>
+                            <select class="form-select" id="year_end" name="year_end">
+                                <option value="">Any</option>
+                                {% for y in years|reverse %}
+                                <option value="{{ y }}">{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="n_recommendations" class="form-label">{{ t('Results Count') }}</label>
+                        <select class="form-select" id="n_recommendations" name="n_recommendations">
+                            <option value="5" selected>5 Movies</option>
+                            <option value="10">10 Movies</option>
+                            <option value="15">15 Movies</option>
+                            <option value="20">20 Movies</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-cinematic w-100 py-3 mt-2 shadow-lg recommendation-submit-btn">
+                        <span class="submit-ready">
+                            <i class="fa-solid fa-bolt me-2"></i> {{ t('Generate Recommendations') }}
+                        </span>
+                        <span class="submit-loading">
+                            <span class="recommendation-spinner"></span> Finding matches...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="col-lg-8">
+            {% if request.method == 'POST' %}
+            <div class="mb-4 d-flex justify-content-between align-items-center" data-aos="fade-left">
+                <h3 class="text-white mb-0">Recommended For You</h3>
+                <span class="badge bg-danger rounded-pill px-3 py-2">{{ recommendations|length }} Results</span>
+            </div>
+            <div class="recommendation-engine-label mb-4" data-aos="fade-left" data-aos-delay="50">
+                <i class="fa-solid fa-brain me-2"></i>
+                Powered by K-Nearest Neighbors (KNN) Recommendation Engine
+            </div>
+
+            {% if recommendations %}
+            <div class="netflix-row" data-aos="fade-up">
+                <div class="recommendation-slider-header">
+                    <div></div>
+                    <div class="slider-controls" aria-label="Recommendation slider controls">
+                        <button class="slider-nav-btn recommendation-slider-prev" type="button" aria-label="Scroll recommendations left">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button class="slider-nav-btn recommendation-slider-next" type="button" aria-label="Scroll recommendations right">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="netflix-slider recommendation-slider">
+                    {% for rec in recommendations %}
+                    <div class="slider-item">
+                        <div class="movie-card shadow">
+                            <div class="movie-poster-container">
+                                <img src="{{ rec.poster_url if rec.poster_url else 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' }}"
+                                    class="movie-poster" alt="{{ rec.title }} poster">
+                                <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
+                                <div class="movie-overlay d-flex flex-column justify-content-end">
+                                    <h5 class="movie-title text-truncate" title="{{ rec.title }}">{{ rec.title }}</h5>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-danger">{{ rec.year }}</span>
+                                        <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{
+                                            rec.avg_rating }}</span>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        {% set genres_list = rec.genres.split(', ') %}
+                                        {% for genre in genres_list[:2] %}
+                                        <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
+                                        {% endfor %}
+                                    </div>
+
+                                    <div class="movie-actions">
+                                        <a href="{{ rec.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb" aria-label="Open {{ rec.title }} on IMDb">
+                                            <i class="fa-brands fa-imdb"></i> IMDb
+                                        </a>
+                                        <a href="{{ rec.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer" aria-label="Search {{ rec.title }} trailer on YouTube">
+                                            <i class="fa-solid fa-play"></i> Trailer
+                                        </a>
+                                    </div>
+
+                                    <small class="text-white opacity-75 text-truncate" title="{{ rec.reason }}">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-info me-1"></i> {{ rec.reason }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert glass-card p-5 text-center mt-4" data-aos="fade-up">
+                <i class="fa-solid fa-face-frown text-warning fs-1 mb-3"></i>
+                <h4 class="text-white">No matches found</h4>
+                <p class="text-muted mb-0">We couldn't find any recommendations matching your criteria or the movie was
+                    not found in our dataset. Try adjusting your filters.</p>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="glass-card d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center mt-4 mt-lg-0"
+                data-aos="zoom-in" style="min-height: 400px; border: 1px dashed rgba(255,255,255,0.2);">
+                <div class="mb-4 text-muted" style="font-size: 4rem; opacity: 0.5;">
+                    <i class="fa-solid fa-film"></i>
+                </div>
+                <h3 class="text-white mb-2">Awaiting Your Search</h3>
+                <p class="text-muted max-w-md">Use the panel on the left to set your preferences and let our KNN
+                    algorithm discover your next favorite movie.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const recommendationForm = document.getElementById('recommendationForm');
+    if (recommendationForm) {
+        recommendationForm.addEventListener('submit', () => {
+            recommendationForm.classList.add('is-loading');
+            const submitButton = recommendationForm.querySelector('.recommendation-submit-btn');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+        });
+    }
+
+    const recommendationSlider = document.querySelector('.recommendation-slider');
+    const recommendationPrevious = document.querySelector('.recommendation-slider-prev');
+    const recommendationNext = document.querySelector('.recommendation-slider-next');
+
+    if (recommendationSlider && recommendationPrevious && recommendationNext) {
+        const scrollRecommendations = (direction) => {
+            const card = recommendationSlider.querySelector('.slider-item');
+            const cardWidth = card ? card.getBoundingClientRect().width : 220;
+            recommendationSlider.scrollBy({
+                left: direction * Math.max(cardWidth * 2, 360),
+                behavior: 'smooth'
+            });
+        };
+
+        recommendationPrevious.addEventListener('click', () => scrollRecommendations(-1));
+        recommendationNext.addEventListener('click', () => scrollRecommendations(1));
+    }
+</script>
+{% endblock %}

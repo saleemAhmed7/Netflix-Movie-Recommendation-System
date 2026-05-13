@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-wrapper">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content text-center text-md-start pt-5 mt-5">
+        <div class="row align-items-center">
+            <div class="col-lg-8" data-aos="fade-right">
+                <span class="badge bg-danger mb-3 px-3 py-2 text-uppercase letter-spacing-1">{{ t('Data Mining Project') }}</span>
+                <h1 class="hero-title text-white">{{ t('Discover Your Next') }}<br><span class="text-gradient">{{ t('Cinematic Experience') }}</span></h1>
+                <p class="lead mb-5 hero-description" style="max-width: 600px; font-weight: 300;">
+                    A state-of-the-art Web-Based Movie Recommendation System powered by the K-Nearest Neighbors (KNN) algorithm and the MovieLens dataset.
+                </p>
+                <div class="d-flex flex-wrap gap-3 justify-content-center justify-content-md-start">
+                    <a href="/recommend" class="btn btn-cinematic btn-lg px-5 py-3 rounded-pill shadow-lg d-flex align-items-center">
+                        <i class="fa-solid fa-play me-2"></i> {{ t('Get Recommendations') }}
+                    </a>
+                    <a href="/analysis" class="btn btn-cinematic-outline btn-lg px-5 py-3 rounded-pill d-flex align-items-center">
+                        <i class="fa-solid fa-chart-pie me-2"></i> {{ t('View Dataset Stats') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container mt-5 pt-5 mb-5 pb-5">
+    <div class="text-center mb-5 pb-3" data-aos="fade-up">
+        <h2 class="section-title text-white">System Architecture</h2>
+        <p class="section-subtitle">How we power your personalized recommendations</p>
+    </div>
+
+    <div class="row g-5">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="glass-card h-100 p-5 text-center">
+                <div class="mb-4" style="font-size: 3rem; color: var(--accent-red);">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <h3 class="h4 font-weight-bold mb-3 text-white">MovieLens Dataset</h3>
+                <p class="feature-description mb-0">Utilizes the renowned MovieLens dataset. We processed 200,000 ratings and thousands of movies to ensure high accuracy while maintaining optimal performance.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="glass-card h-100 p-5 text-center">
+                <div class="mb-4" style="font-size: 3rem; color: var(--accent-amber);">
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <h3 class="h4 font-weight-bold mb-3 text-white">KNN Algorithm</h3>
+                <p class="feature-description mb-0">Powered by Collaborative Filtering using the K-Nearest Neighbors (KNN) algorithm with cosine similarity to precisely find movies related to your favorites.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="glass-card h-100 p-5 text-center">
+                <div class="mb-4" style="font-size: 3rem; color: var(--accent-blue);">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h3 class="h4 font-weight-bold mb-3 text-white">Academic Project</h3>
+                <p class="feature-description mb-0">Built as a comprehensive university project for Data Mining, demonstrating practical data preprocessing, machine learning, and full-stack web development.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

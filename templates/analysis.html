@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container pt-5 mt-5 pb-5">
+    <div class="mb-5 pb-3 border-bottom border-secondary" data-aos="fade-down">
+        <h2 class="section-title text-white">{{ t('Dataset Analysis') }} &amp; Statistics</h2>
+        <p class="section-description fs-5">A deep dive into the MovieLens data used to train the KNN Recommendation Model.</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="glass-card p-4 text-center">
+                <div class="stats-description text-uppercase fw-bold letter-spacing-1 mb-2">Total Users</div>
+                <h1 class="display-4 fw-bold text-gradient mb-0">{{ stats.total_users }}</h1>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="glass-card p-4 text-center">
+                <div class="stats-description text-uppercase fw-bold letter-spacing-1 mb-2">Total Movies</div>
+                <h1 class="display-4 fw-bold text-gradient mb-0">{{ stats.total_movies }}</h1>
+            </div>
+        </div>
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="glass-card p-4 text-center">
+                <div class="stats-description text-uppercase fw-bold letter-spacing-1 mb-2">Ratings Analyzed</div>
+                <h1 class="display-4 fw-bold text-gradient mb-0">{{ stats.total_ratings }}</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Netflix Rows -->
+    <div class="netflix-row" data-aos="fade-up">
+        <div class="netflix-row-header">
+            <h3 class="netflix-row-title"><i class="fa-solid fa-trophy text-warning me-2"></i> {{ t('Top Rated Movies') }}</h3>
+            <div class="slider-controls" aria-label="Top Rated Movies slider controls">
+                <button class="slider-nav-btn slider-nav-prev" type="button" aria-label="Scroll Top Rated Movies left">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="slider-nav-btn slider-nav-next" type="button" aria-label="Scroll Top Rated Movies right">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="netflix-slider ranked-slider" id="topRatedSlider">
+            {% if stats.top_rated %}
+            {% for movie in stats.top_rated %}
+            <div class="slider-item">
+                <div class="movie-card shadow">
+                    <div class="movie-poster-container">
+                        {% if loop.index <= 10 %}
+                        <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{ loop.index }}</div>
+                        {% endif %}
+                        <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop' }}" class="movie-poster" alt="{{ movie.title }} poster">
+                        <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
+                        <div class="movie-overlay d-flex flex-column justify-content-end">
+                            <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger">{{ movie.year }}</span>
+                                <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating }}</span>
+                            </div>
+                            <div class="mb-2">
+                                {% set genres_list = movie.genres.split(', ') %}
+                                {% for genre in genres_list[:2] %}
+                                <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="movie-actions">
+                                <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb" aria-label="Open {{ movie.title }} on IMDb">
+                                    <i class="fa-brands fa-imdb"></i> IMDb
+                                </a>
+                                <a href="{{ movie.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer" aria-label="Search {{ movie.title }} trailer on YouTube">
+                                    <i class="fa-solid fa-play"></i> Trailer
+                                </a>
+                            </div>
+                            <small class="text-white opacity-75">{{ movie.total_ratings }} Votes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="slider-empty glass-card p-4 text-center w-100">
+                <p class="mb-0 text-white">No top-rated movies are available yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="netflix-row mt-5" data-aos="fade-up" data-aos-delay="100">
+        <div class="netflix-row-header">
+            <h3 class="netflix-row-title"><i class="fa-solid fa-fire text-danger me-2"></i> {{ t('Trending Now (Most Popular)') }}</h3>
+            <div class="slider-controls" aria-label="Trending Now slider controls">
+                <button class="slider-nav-btn slider-nav-prev" type="button" aria-label="Scroll Trending Now left">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button class="slider-nav-btn slider-nav-next" type="button" aria-label="Scroll Trending Now right">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="netflix-slider ranked-slider" id="trendingSlider">
+            {% for movie in stats.most_rated %}
+            <div class="slider-item">
+                <div class="movie-card shadow">
+                    <div class="movie-poster-container">
+                        {% if loop.index <= 10 %}
+                        <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{ loop.index }}</div>
+                        {% endif %}
+                        <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' }}" class="movie-poster" alt="{{ movie.title }} poster">
+                        <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
+                        <div class="movie-overlay d-flex flex-column justify-content-end">
+                            <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-danger">{{ movie.year }}</span>
+                                <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating }}</span>
+                            </div>
+                            <div class="mb-2">
+                                {% set genres_list = movie.genres.split(', ') %}
+                                {% for genre in genres_list[:2] %}
+                                <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="movie-actions">
+                                <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb" aria-label="Open {{ movie.title }} on IMDb">
+                                    <i class="fa-brands fa-imdb"></i> IMDb
+                                </a>
+                                <a href="{{ movie.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer" aria-label="Search {{ movie.title }} trailer on YouTube">
+                                    <i class="fa-solid fa-play"></i> Trailer
+                                </a>
+                            </div>
+                            <small class="text-white opacity-75" style="color: var(--accent-blue) !important;">{{ movie.total_ratings }} Votes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row mt-5">
+        <div class="col-12" data-aos="fade-up">
+            <div class="glass-card p-4">
+                <h4 class="mb-4 text-white"><i class="fa-solid fa-chart-bar text-info me-2"></i> Top 10 Genres Distribution</h4>
+                <div style="height: 400px; width: 100%;">
+                    <canvas id="genreChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const genreData = {{ stats.genre_counts | tojson }};
+    const labels = Object.keys(genreData);
+    const data = Object.values(genreData);
+
+    // Create a gradient for the chart
+    const ctx = document.getElementById('genreChart').getContext('2d');
+    let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)'); // Red
+    gradient.addColorStop(1, 'rgba(245, 158, 11, 0.8)'); // Amber
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of Movies',
+                data: data,
+                backgroundColor: gradient,
+                borderWidth: 0,
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    titleColor: '#fff',
+                    bodyColor: '#cbd5e1',
+                    padding: 12,
+                    displayColors: false,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: {
+                            family: "'Inter', sans-serif"
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#cbd5e1',
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: '500'
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    document.querySelectorAll('.netflix-row').forEach((row) => {
+        const slider = row.querySelector('.netflix-slider');
+        const previousButton = row.querySelector('.slider-nav-prev');
+        const nextButton = row.querySelector('.slider-nav-next');
+
+        if (!slider || !previousButton || !nextButton) {
+            return;
+        }
+
+        const scrollSlider = (direction) => {
+            const card = slider.querySelector('.slider-item');
+            const cardWidth = card ? card.getBoundingClientRect().width : 220;
+            slider.scrollBy({
+                left: direction * Math.max(cardWidth * 2, 360),
+                behavior: 'smooth'
+            });
+        };
+
+        previousButton.addEventListener('click', () => scrollSlider(-1));
+        nextButton.addEventListener('click', () => scrollSlider(1));
+    });
+</script>
+{% endblock %}

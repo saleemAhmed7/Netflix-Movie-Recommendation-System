@@ -1,0 +1,791 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg-darker: #0b0f1a;
+    --bg-dark: #111827;
+    --bg-card: #1e293b;
+    --accent-red: #e50914;
+    --accent-amber: #f59e0b;
+    --accent-blue: #38bdf8;
+    --text-white: #ffffff;
+    --text-light: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-secondary: #f1f5f9;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: var(--bg-darker);
+    color: var(--text-light);
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.section-subtitle,
+.section-description,
+.hero-description,
+.feature-description,
+.footer-description,
+.footer-links,
+.tech-list,
+.stats-description {
+    color: #cbd5e1;
+    opacity: 1;
+}
+
+h1, h2, .navbar-brand {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-white);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.5px;
+}
+
+h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 0;
+    transition: all 0.3s ease;
+}
+
+/* Ensure dropdowns can appear above the navbar and other content */
+.navbar {
+    z-index: 1100;
+    overflow: visible;
+}
+
+/* Dropdown menu tweaks: higher z-index, smooth animation and responsive width */
+.dropdown-menu {
+    z-index: 2050 !important;
+    min-width: 10rem;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+    transform-origin: top right;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+    pointer-events: none;
+}
+
+.dropdown-menu.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+/* Ensure the dropdown is absolutely positioned and visible above collapsing containers */
+.nav-item.dropdown {
+    position: relative;
+}
+
+/* When inside a collapsed navbar, allow visible overflow so menus aren't clipped */
+.collapse {
+    overflow: visible !important;
+}
+
+/* Make sure .dropdown-menu displays when shown (some browsers need explicit display) */
+.dropdown-menu.show {
+    display: block !important;
+}
+
+/* Tweak caret spacing for dropdown toggle */
+.dropdown-toggle::after {
+    margin-left: 0.5rem;
+}
+
+@keyframes dropdown-fade-down {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dropdown-menu.show {
+    animation: dropdown-fade-down 0.18s ease forwards;
+}
+
+/* Mobile: make dropdown full-width and easy to tap */
+@media (max-width: 576px) {
+    .dropdown-menu {
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        border-radius: 10px;
+    }
+}
+
+/* Show language dropdown on hover for pointer-capable devices (desktop). */
+@media (hover: hover) and (pointer: fine) {
+    .nav-item.dropdown:hover > .dropdown-menu {
+        display: block !important;
+        opacity: 1 !important;
+        transform: translateY(0) scale(1) !important;
+        pointer-events: auto !important;
+    }
+
+    /* Slightly enlarge the toggle on hover to indicate interactivity */
+    .nav-item.dropdown .dropdown-toggle:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: var(--accent-red) !important;
+    text-transform: uppercase;
+}
+
+.nav-link {
+    color: var(--text-light) !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin: 0 10px;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    display: block;
+    margin-top: 5px;
+    right: 0;
+    background: var(--accent-red);
+    transition: width 0.3s ease;
+    -webkit-transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+    left: 0;
+    background: var(--accent-red);
+}
+
+.nav-link:hover {
+    color: var(--text-white) !important;
+}
+
+/* Hero Section */
+.hero-wrapper {
+    position: relative;
+    background: url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+    background-size: cover;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.7) 50%, rgba(15, 23, 42, 0.3) 100%);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 4rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Buttons */
+.btn-cinematic {
+    background-color: var(--accent-red);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    padding: 12px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.btn-cinematic:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+    color: white;
+}
+
+.btn-cinematic-outline {
+    background-color: transparent;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    padding: 10px 28px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-cinematic-outline:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    color: var(--text-light);
+    line-height: 1.6;
+}
+
+.card p,
+.feature-card p,
+.card-description,
+.feature-description,
+.glass-card p {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+.glass-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Movie Poster Cards */
+.movie-card {
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-color);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+}
+
+.movie-card:hover {
+    transform: scale(1.05) translateY(-10px);
+    border-color: rgba(229, 9, 20, 0.38);
+    box-shadow:
+        0 0 20px rgba(229, 9, 20, 0.18),
+        0 22px 44px rgba(0, 0, 0, 0.66);
+    z-index: 10;
+}
+
+.movie-poster-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+}
+
+.movie-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.movie-rank-badge {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    z-index: 4;
+    color: rgba(255, 255, 255, 0.9);
+    font-family: 'Poppins', sans-serif;
+    font-size: 2.35rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    pointer-events: none;
+    text-shadow:
+        0 0 14px rgba(229, 9, 20, 0.8),
+        0 6px 18px rgba(0, 0, 0, 0.95);
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.35);
+    opacity: 0.78;
+    transform: translateX(-3px);
+    transition: opacity 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
+}
+
+.movie-card:hover .movie-rank-badge {
+    opacity: 0.95;
+    transform: translateX(0) scale(1.06);
+    text-shadow:
+        0 0 18px rgba(229, 9, 20, 1),
+        0 8px 24px rgba(0, 0, 0, 1);
+}
+
+.movie-card:hover .movie-poster {
+    transform: scale(1.1);
+}
+
+.movie-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(15, 23, 42, 1) 0%, rgba(15, 23, 42, 0.8) 50%, transparent 100%);
+    padding: 20px;
+    transform: translateY(20px);
+    opacity: 0.9;
+    transition: all 0.4s ease;
+}
+
+.movie-card:hover .movie-overlay {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.movie-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+}
+
+.movie-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    margin-bottom: 0.55rem;
+}
+
+.movie-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 30px;
+    padding: 0.35rem 0.45rem;
+    border-radius: 999px;
+    color: var(--text-white);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-decoration: none;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.movie-action-btn:hover {
+    color: var(--text-white);
+    transform: translateY(-2px);
+}
+
+.movie-action-imdb {
+    background: rgba(245, 197, 24, 0.2);
+    color: #f5c518;
+}
+
+.movie-action-imdb:hover {
+    border-color: rgba(245, 197, 24, 0.6);
+    box-shadow: 0 0 16px rgba(245, 197, 24, 0.35), 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+.movie-action-trailer {
+    background: rgba(229, 9, 20, 0.78);
+}
+
+.movie-action-trailer:hover {
+    background: rgba(229, 9, 20, 1);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 16px rgba(229, 9, 20, 0.55), 0 8px 18px rgba(0, 0, 0, 0.45);
+}
+
+/* Netflix Horizontal Row Styles */
+.netflix-row {
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.netflix-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.netflix-row-title {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 0;
+    padding-left: 1rem;
+    font-family: 'Poppins', sans-serif;
+    border-left: 4px solid var(--accent-red);
+}
+
+.slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.recommendation-slider-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: -0.5rem 0 0.35rem;
+    padding-right: 0.25rem;
+}
+
+.slider-nav-btn {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.72);
+    color: var(--text-white);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(10px);
+    transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.slider-nav-btn:hover {
+    background: rgba(229, 9, 20, 0.9);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 18px rgba(229, 9, 20, 0.55), 0 10px 24px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px) scale(1.04);
+}
+
+.slider-nav-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.netflix-slider {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 15px;
+    padding: 20px 10px;
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-padding-left: 10px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.netflix-slider::-webkit-scrollbar {
+    height: 8px;
+}
+
+.netflix-slider::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+}
+
+.netflix-slider::-webkit-scrollbar-thumb {
+    background: rgba(229, 9, 20, 0.5);
+    border-radius: 4px;
+}
+
+.netflix-slider::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-red);
+}
+
+.slider-item {
+    flex: 0 0 220px;
+    transition: transform 0.4s ease;
+    scroll-snap-align: start;
+}
+
+.slider-item:hover {
+    transform: scale(1.08);
+    z-index: 10;
+}
+
+.slider-item .movie-card {
+    height: 100%;
+}
+
+.recommendation-engine-label {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.72rem 1rem;
+    border: 1px solid rgba(56, 189, 248, 0.24);
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.08);
+    color: #dbeafe;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.35;
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.08);
+}
+
+.recommendation-submit-btn {
+    position: relative;
+    min-height: 52px;
+}
+
+.submit-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.recommendation-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: recommendation-spin 0.75s linear infinite;
+}
+
+.is-loading .submit-ready {
+    display: none;
+}
+
+.is-loading .submit-loading {
+    display: inline-flex;
+}
+
+.is-loading .recommendation-submit-btn {
+    cursor: progress;
+    opacity: 0.92;
+}
+
+@keyframes recommendation-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 576px) {
+    .netflix-row-header {
+        align-items: flex-start;
+    }
+
+    .netflix-row-title {
+        font-size: 1.35rem;
+    }
+
+    .slider-nav-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .movie-rank-badge {
+        font-size: 2rem;
+        top: 9px;
+        left: 10px;
+    }
+
+    .netflix-slider {
+        gap: 12px;
+        padding: 16px 4px 20px;
+    }
+
+    .slider-item {
+        flex-basis: min(72vw, 210px);
+    }
+
+    .movie-overlay {
+        padding: 16px;
+        transform: translateY(10px);
+    }
+
+    .movie-title {
+        font-size: 1rem;
+    }
+
+    .movie-actions {
+        gap: 0.35rem;
+    }
+
+    .movie-action-btn {
+        min-height: 28px;
+        font-size: 0.68rem;
+        padding: 0.32rem 0.38rem;
+    }
+
+    .recommendation-engine-label {
+        border-radius: 14px;
+        font-size: 0.8rem;
+    }
+}
+
+/* Form Styles */
+.form-control,
+.form-select {
+    background-color: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: rgba(15, 23, 42, 0.9);
+    border-color: var(--accent-blue);
+    color: white;
+    box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 400;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badges */
+.badge-genre {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 500;
+    border-radius: 20px;
+    padding: 5px 12px;
+    margin: 2px;
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.badge-genre:hover {
+    background-color: rgb(255, 255, 255);
+    transform: scale(1.05);
+}
+
+.badge-rating {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: var(--accent-amber);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+/* Tables */
+.table {
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+.table-dark {
+    background-color: transparent;
+}
+
+.table-hover tbody tr:hover {
+    color: var(--text-white);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+thead th {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
+    color: var(--text-white);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    vertical-align: middle;
+}
+
+/* Footer */
+.footer {
+    background-color: #0b1120;
+    border-top: 1px solid var(--border-color);
+    padding: 50px 0 20px;
+    margin-top: 80px;
+}
+
+.footer-heading {
+    color: white;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+    color: var(--accent-blue);
+}
+
+/* Utility */
+.text-gradient {
+    background: linear-gradient(45deg, var(--accent-red), var(--accent-amber));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-title {
+    font-weight: 800;
+    margin-bottom: 30px;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    width: 40%;
+    height: 3px;
+    bottom: -10px;
+    left: 0;
+    background: var(--accent-red);
+    border-radius: 2px;
+}
+
+/* IMDb Integration */
+.imdb-glow-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #f5c518;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 5;
+    box-shadow: 0 0 10px rgba(245, 197, 24, 0);
+}
+
+.movie-card:hover .imdb-glow-icon {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(245, 197, 24, 0.8);
+    transform: scale(1.1);
+}
