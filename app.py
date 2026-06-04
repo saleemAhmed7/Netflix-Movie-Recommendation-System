@@ -1,8 +1,12 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, redirect, render_template, request
 from data_processor import MovieRecommender
+import json
 import os
+import re
 import socket
 import sys
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import threading
 import time
@@ -11,6 +15,7 @@ debug_mode = os.environ.get("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0 if debug_mode else None
 HOST = os.environ.get("FLASK_HOST", "0.0.0.0")
 PORT = int(os.environ.get("FLASK_PORT", "5000"))
+TMDB_POSTER_CACHE = {}
 
 # Initialize recommender with dataset paths
 RATINGS_PATH = os.path.join(os.path.dirname(__file__), '..', 'ratings.csv')
@@ -248,7 +253,6 @@ def _start_dataset_watcher(paths, interval=5):
 
 # Begin watching core dataset CSVs
 _paths_to_watch = [RATINGS_PATH, MOVIES_PATH, LINKS_PATH]
-_start_dataset_watcher(_paths_to_watch)
 
 @app.route('/_dev/reload-token')
 def dev_reload_token():
@@ -276,10 +280,16 @@ def recommend():
     all_years = recommender.get_all_years()
     
     recommendations = []
+    movie_name = ''
+    genre = []
+    min_rating = '0'
+    year_start = ''
+    year_end = ''
+    n_recommendations = 5
     
     if request.method == 'POST':
         movie_name = request.form.get('movie_name', '')
-        genre = request.form.get('genre', '')
+        genre = request.form.getlist('genre')
         min_rating = request.form.get('min_rating', '0')
         year_start = request.form.get('year_start', '')
         year_end = request.form.get('year_end', '')
@@ -298,8 +308,125 @@ def recommend():
         'recommendation.html', 
         genres=all_genres, 
         years=all_years,
-        recommendations=recommendations
+        recommendations=recommendations,
+        total_movies=recommender.get_genre_movie_count(genre if genre else None),
+        selected_movie=movie_name,
+        selected_genres=genre,
+        selected_min_rating=min_rating,
+        selected_year_start=year_start,
+        selected_year_end=year_end,
+        selected_n_recommendations=str(n_recommendations)
     )
+
+@app.route('/api/genre-count')
+def api_genre_count():
+    """Return the number of movies matching selected genres (AJAX)."""
+    selected = request.args.getlist('genres')
+    count = recommender.get_genre_movie_count(selected if selected else None)
+    return jsonify({"count": count})
+
+TMDB_POSTER_CACHE_FILE = os.path.join(os.path.dirname(__file__), 'cache', 'poster_cache.json')
+
+def _load_poster_cache():
+    try:
+        if os.path.exists(TMDB_POSTER_CACHE_FILE):
+            with open(TMDB_POSTER_CACHE_FILE, "r") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def _save_poster_cache():
+    try:
+        os.makedirs(os.path.dirname(TMDB_POSTER_CACHE_FILE), exist_ok=True)
+        with open(TMDB_POSTER_CACHE_FILE, "w") as f:
+            json.dump(TMDB_POSTER_CACHE, f)
+    except Exception:
+        pass
+
+# Initialize cache globally
+if not globals().get('TMDB_POSTER_CACHE'):
+    TMDB_POSTER_CACHE = _load_poster_cache()
+
+def _clean_external_id(value):
+    if value is None:
+        return ""
+    if isinstance(value, float):
+        return str(int(value)) if value.is_integer() else ""
+    if isinstance(value, int):
+        return str(value)
+    if re.fullmatch(r"\d+\.0+", str(value).strip()):
+        return str(int(float(str(value).strip())))
+    digits = re.sub(r"\D", "", str(value))
+    return digits
+
+def _fetch_poster_url(tmdb_id, imdb_id=None):
+    tmdb_digits = _clean_external_id(tmdb_id)
+    imdb_digits = _clean_external_id(imdb_id)
+    
+    cache_key = f"tmdb_{tmdb_digits}" if tmdb_digits else f"imdb_{imdb_digits}"
+    if not cache_key or cache_key in ["tmdb_", "imdb_"]:
+        return None
+        
+    if cache_key in TMDB_POSTER_CACHE:
+        url = TMDB_POSTER_CACHE[cache_key]
+        return url if url != "FAILED" else None
+
+    poster_url = None
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    # 1. Try TMDB first
+    if tmdb_digits:
+        request = Request(f"https://www.themoviedb.org/movie/{tmdb_digits}", headers=headers)
+        try:
+            with urlopen(request, timeout=5) as response:
+                html = response.read().decode("utf-8", errors="ignore")
+                match = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', html)
+                if not match:
+                    match = re.search(r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']', html)
+                if match:
+                    url = match.group(1).strip()
+                    if url.startswith("http"):
+                        poster_url = url
+        except Exception:
+            pass
+
+    # 2. Try IMDB as alternative fallback
+    if not poster_url and imdb_digits:
+        request = Request(f"https://www.imdb.com/title/tt{int(imdb_digits):07d}/", headers=headers)
+        try:
+            with urlopen(request, timeout=5) as response:
+                html = response.read().decode("utf-8", errors="ignore")
+                match = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']', html)
+                if match:
+                    url = match.group(1).strip()
+                    if url.startswith("http") and "title" in url.lower():
+                        poster_url = url
+        except Exception:
+            pass
+
+    if poster_url:
+        TMDB_POSTER_CACHE[cache_key] = poster_url
+    else:
+        TMDB_POSTER_CACHE[cache_key] = "FAILED"
+        
+    _save_poster_cache()
+    return poster_url
+
+@app.route('/poster/<int:movie_id>.svg')
+def movie_poster(movie_id):
+    movie = recommender.get_movie_by_id(movie_id)
+    if not movie:
+        return Response("Movie not found", status=404)
+
+    real_poster_url = _fetch_poster_url(movie.get("tmdbId"), movie.get("imdbId"))
+    if real_poster_url:
+        return redirect(real_poster_url, code=302)
+
+    return Response("Poster not found", status=404)
 
 def get_local_ipv4():
     """Return the LAN/hotspot IPv4 address that another device can open."""

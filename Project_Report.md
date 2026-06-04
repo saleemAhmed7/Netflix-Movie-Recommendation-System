@@ -39,15 +39,29 @@ The preprocessing pipeline in `data_processor.py` performs these steps:
 
 1. Loads only required columns from the large ratings file to reduce memory usage.
 2. Normalizes column names such as `userId`, `movieId`, and `rating`.
-3. Loads movie metadata from `movies.csv`.
-4. Loads IMDb/TMDb IDs from `links.csv`.
-5. Merges movie data with IMDb link data.
-6. Extracts release year from titles such as `Toy Story (1995)`.
-7. Cleans movie titles by removing the year suffix.
-8. Converts genre formatting from pipe-separated text to readable comma-separated text.
-9. Calculates average rating and total rating count for every movie.
-10. Assigns poster fallback images based on the movie genre.
-11. Builds lookup dictionaries for fast title and movie ID access.
+3. Filters invalid rating rows by removing records with missing `userId`, `movieId`, or `rating`.
+4. Loads movie metadata from `movies.csv`.
+5. Filters invalid movie rows by removing records with missing `movieId` or `title`.
+6. Removes duplicate movies by keeping one record per `movieId`.
+7. Loads IMDb/TMDb IDs from `links.csv`.
+8. Removes duplicate link rows by keeping one record per `movieId`.
+9. Merges movie data with IMDb link data.
+10. Extracts release year from titles such as `Toy Story (1995)`.
+11. Cleans movie titles by removing the year suffix.
+12. Converts genre formatting from pipe-separated text to readable comma-separated text.
+13. Replaces missing genre values with empty text and removes `(no genres listed)`.
+14. Calculates average rating and total rating count for every movie.
+15. Keeps movies with no ratings in the clean metadata by filling their average rating with `0` and total rating count with `0`.
+16. Assigns poster fallback images based on the movie genre.
+17. Builds lookup dictionaries for fast title and movie ID access.
+
+After preprocessing, the cleaned movie metadata is saved as `cache/movies_clean.pkl`, and the dataset summary is saved as `cache/dataset_summary.json`. The current cached summary contains:
+
+- Total users: `200,948`.
+- Total movies: `87,585`.
+- Total ratings: `32,000,204`.
+- Average rating: approximately `3.54`.
+- Rating range: `0.5` to `5.0`.
 
 ## 5. Recommendation Algorithm
 

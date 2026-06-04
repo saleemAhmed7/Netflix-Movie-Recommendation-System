@@ -24,8 +24,8 @@
                                 style="border-color: rgba(255,255,255,0.1); color: var(--text-muted);">
                                 <i class="fa-solid fa-film"></i>
                             </span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="movie_name"
-                                name="movie_name" placeholder="e.g. Toy Story">
+                            <input type="text" class="form-control" id="movie_name" name="movie_name"
+                               placeholder="{{ t('Based on a movie you like') }}..." value="{{ selected_movie }}">
                         </div>
                         <small class="text-muted mt-1 d-block"><i class="fa-solid fa-circle-info me-1"></i>Uses KNN to
                             find similar movies.</small>
@@ -35,13 +35,19 @@
 
                     <!-- Filters -->
                     <div class="mb-3">
-                        <label for="genre" class="form-label">{{ t('Genre') }}</label>
-                        <select class="form-select" id="genre" name="genre">
-                            <option value="">Any Genre</option>
+                        <label class="form-label d-block mb-2">{{ t('Genre') }} <span id="genreMovieCount" style="font-size: 0.78rem; color: rgba(255,255,255,0.45); font-weight: 400;">• {{ '{:,}'.format(total_movies) }} Movies</span></label>
+                        <div class="genre-chips-container d-flex flex-wrap gap-2 pb-2">
                             {% for g in genres %}
-                            <option value="{{ g }}">{{ g }}</option>
+                            <div class="genre-chip">
+                                <input type="checkbox" name="genre" value="{{ g }}" id="genre_{{ loop.index }}"
+                                       class="btn-check" autocomplete="off"
+                                       {% if selected_genres and g in selected_genres %}checked{% endif %}>
+                                <label class="btn btn-outline-light rounded-pill px-3 py-1 m-0" for="genre_{{ loop.index }}" style="font-size: 0.9rem;">
+                                    {{ g }}
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -51,8 +57,8 @@
                                 style="border-color: rgba(255,255,255,0.1); color: var(--accent-amber);">
                                 <i class="fa-solid fa-star"></i>
                             </span>
-                            <input type="number" class="form-control border-start-0 ps-0" id="min_rating"
-                                name="min_rating" min="0" max="5" step="0.5" placeholder="e.g. 4.0">
+                            <input type="number" class="form-control" id="min_rating" name="min_rating" step="0.5"
+                                   min="0" max="5" placeholder="0 - 5" value="{{ selected_min_rating }}">
                         </div>
                     </div>
 
@@ -60,18 +66,18 @@
                         <div class="col-6">
                             <label for="year_start" class="form-label">{{ t('From Year') }}</label>
                             <select class="form-select" id="year_start" name="year_start">
-                                <option value="">Any</option>
+                                <option value="">{{ t('From Year') }}</option>
                                 {% for y in years %}
-                                <option value="{{ y }}">{{ y }}</option>
+                                <option value="{{ y }}" {% if selected_year_start == y|string or selected_year_start == y %}selected{% endif %}>{{ y }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-6">
                             <label for="year_end" class="form-label">{{ t('To Year') }}</label>
                             <select class="form-select" id="year_end" name="year_end">
-                                <option value="">Any</option>
+                                <option value="">{{ t('To Year') }}</option>
                                 {% for y in years|reverse %}
-                                <option value="{{ y }}">{{ y }}</option>
+                                <option value="{{ y }}" {% if selected_year_end == y|string or selected_year_end == y %}selected{% endif %}>{{ y }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -80,10 +86,10 @@
                     <div class="mb-4">
                         <label for="n_recommendations" class="form-label">{{ t('Results Count') }}</label>
                         <select class="form-select" id="n_recommendations" name="n_recommendations">
-                            <option value="5" selected>5 Movies</option>
-                            <option value="10">10 Movies</option>
-                            <option value="15">15 Movies</option>
-                            <option value="20">20 Movies</option>
+                            <option value="5" {% if selected_n_recommendations == '5' %}selected{% endif %}>5 Movies</option>
+                            <option value="10" {% if selected_n_recommendations == '10' %}selected{% endif %}>10 Movies</option>
+                            <option value="15" {% if selected_n_recommendations == '15' %}selected{% endif %}>15 Movies</option>
+                            <option value="20" {% if selected_n_recommendations == '20' %}selected{% endif %}>20 Movies</option>
                         </select>
                     </div>
 
@@ -130,7 +136,12 @@
                         <div class="movie-card shadow">
                             <div class="movie-poster-container">
                                 <img src="{{ rec.poster_url if rec.poster_url else 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' }}"
-                                    class="movie-poster" alt="{{ rec.title }} poster">
+                                    class="movie-poster"
+                                    alt="{{ rec.title }} poster"
+                                    data-title="{{ rec.title }}"
+                                    data-year="{{ rec.year }}"
+                                    data-genre="{{ rec.genres.split(', ')[0] if rec.genres else 'Movie' }}"
+                                    data-rating="{{ rec.avg_rating }}">
                                 <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
                                 <div class="movie-overlay d-flex flex-column justify-content-end">
                                     <h5 class="movie-title text-truncate" title="{{ rec.title }}">{{ rec.title }}</h5>
@@ -169,9 +180,8 @@
             {% else %}
             <div class="alert glass-card p-5 text-center mt-4" data-aos="fade-up">
                 <i class="fa-solid fa-face-frown text-warning fs-1 mb-3"></i>
-                <h4 class="text-white">No matches found</h4>
-                <p class="text-muted mb-0">We couldn't find any recommendations matching your criteria or the movie was
-                    not found in our dataset. Try adjusting your filters.</p>
+                <h4 class="text-white">No movies found matching all selected genres.</h4>
+                <p class="text-muted mb-0">We couldn't find any recommendations matching your selected genres and filters. Try adjusting your selections.</p>
             </div>
             {% endif %}
             {% else %}
@@ -220,5 +230,49 @@
         recommendationPrevious.addEventListener('click', () => scrollRecommendations(-1));
         recommendationNext.addEventListener('click', () => scrollRecommendations(1));
     }
+
+    document.querySelectorAll('.movie-poster').forEach((image) => {
+        image.addEventListener('error', function() {
+            const card = this.closest('.slider-item');
+            if (card) {
+                card.remove();
+            }
+        });
+        
+        // Trigger error manually if image failed to load before JS attached
+        if (image.complete && image.naturalWidth === 0) {
+            const card = image.closest('.slider-item');
+            if (card) {
+                card.remove();
+            }
+        }
+    });
+    // --- Dynamic Genre Counter ---
+    const genreCountEl = document.getElementById('genreMovieCount');
+    const genreCheckboxes = document.querySelectorAll('input[name="genre"]');
+    let genreCountAbort = null;
+
+    function updateGenreCount() {
+        const selected = Array.from(genreCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        if (genreCountAbort) genreCountAbort.abort();
+        genreCountAbort = new AbortController();
+
+        const params = new URLSearchParams();
+        selected.forEach(g => params.append('genres', g));
+
+        fetch('/api/genre-count?' + params.toString(), { signal: genreCountAbort.signal })
+            .then(r => r.json())
+            .then(data => {
+                if (genreCountEl) {
+                    genreCountEl.textContent = '• ' + Number(data.count).toLocaleString() + ' Movies';
+                }
+            })
+            .catch(() => {});
+    }
+
+    genreCheckboxes.forEach(cb => cb.addEventListener('change', updateGenreCount));
 </script>
 {% endblock %}

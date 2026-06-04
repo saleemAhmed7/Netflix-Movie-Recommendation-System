@@ -12,7 +12,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 class MovieRecommender:
-    CACHE_VERSION = 2
+    CACHE_VERSION = 7
 
     def __init__(self, ratings_path, movies_path, links_path=None, tags_path=None):
         self.ratings_path = ratings_path
@@ -48,11 +48,8 @@ class MovieRecommender:
         links = self._load_links()
         tags = self._load_tags()
 
-        if links is not None:
-            movies = movies.merge(links, on="movieId", how="left")
-
-        print("Processing movie metadata...")
-        movies = self._prepare_movie_metadata(movies)
+        # Clean and prepare dataset
+        movies, ratings = self._clean_and_prepare_data(movies, ratings, links)
 
         print("Recalculating movie statistics and rating analytics...")
         rating_stats = (
@@ -62,9 +59,9 @@ class MovieRecommender:
         )
         rating_stats["avg_rating"] = rating_stats["avg_rating"].round(2)
 
-        movies_clean = movies.merge(rating_stats, on="movieId", how="left")
-        movies_clean["avg_rating"] = movies_clean["avg_rating"].fillna(0).round(1)
-        movies_clean["total_ratings"] = movies_clean["total_ratings"].fillna(0).astype(np.int32)
+        movies_clean = movies.merge(rating_stats, on="movieId", how="inner")
+        movies_clean["avg_rating"] = movies_clean["avg_rating"].round(1)
+        movies_clean["total_ratings"] = movies_clean["total_ratings"].astype(np.int32)
         movies_clean["poster_url"] = movies_clean.apply(self._poster_for_movie, axis=1)
 
         self.movies_clean = movies_clean
@@ -154,11 +151,30 @@ class MovieRecommender:
         except Exception:
             return None
 
-    def _prepare_movie_metadata(self, movies):
-        movies = movies.copy()
+    def _clean_and_prepare_data(self, movies, ratings, links):
+        print("Starting comprehensive data cleaning and validation...")
+        initial_movies_count = len(movies)
+        initial_ratings_count = len(ratings)
+        
+        # --- 1. Basic Validation ---
+        movies = movies.dropna(subset=['movieId', 'title'])
+        ratings = ratings.dropna(subset=['userId', 'movieId', 'rating'])
+        
+        # Strict IMDb ID Requirement
+        if links is not None:
+            links = links.dropna(subset=['movieId', 'imdbId'])
+            links = links[links['imdbId'].astype(str).str.contains(r'\d+', na=False)]
+            movies = movies.merge(links, on="movieId", how="inner")
+        
+        # --- 2. Movie Quality Improvements ---
         movies["raw_title"] = movies["title"].astype(str)
-        movies["year"] = movies["raw_title"].str.extract(r"\((\d{4})\)\s*$")[0].fillna("Unknown")
+        movies["year"] = movies["raw_title"].str.extract(r"\((\d{4})\)\s*$")[0]
         movies["title"] = movies["raw_title"].str.replace(r"\s*\(\d{4}\)\s*$", "", regex=True).str.strip()
+        
+        # Remove movies missing year
+        movies = movies.dropna(subset=['year'])
+        
+        # Clean genres and remove missing/invalid
         movies["genres"] = (
             movies["genres"]
             .fillna("")
@@ -167,12 +183,58 @@ class MovieRecommender:
             .str.replace("(no genres listed)", "", regex=False)
             .str.strip()
         )
-
+        movies = movies[movies["genres"] != ""]
+        
+        # Detect and remove duplicates
+        movies = movies.drop_duplicates(subset=['movieId'], keep='first')
+        movies["norm_title"] = movies["title"].str.lower().str.replace(r"[^\w\s]", "", regex=True).str.replace(r"\s+", " ", regex=True).str.strip()
+        
+        movies_before_dedup = len(movies)
+        movies = movies.drop_duplicates(subset=['norm_title', 'year'], keep='first')
+        movies_duplicates_removed = movies_before_dedup - len(movies)
+        
         if "imdbId" in movies.columns:
             movies["imdb_link"] = movies["imdbId"].apply(self._imdb_url)
         else:
             movies["imdb_link"] = "#"
-        return movies
+            
+        movies = movies.drop(columns=["raw_title", "norm_title"])
+        
+        # --- 3. Ratings Quality Improvements ---
+        ratings['userId'] = pd.to_numeric(ratings['userId'], errors='coerce')
+        ratings['movieId'] = pd.to_numeric(ratings['movieId'], errors='coerce')
+        ratings['rating'] = pd.to_numeric(ratings['rating'], errors='coerce')
+        ratings = ratings.dropna(subset=['userId', 'movieId', 'rating'])
+        
+        # Remove duplicate ratings
+        ratings_before_dedup = len(ratings)
+        ratings = ratings.drop_duplicates(subset=['userId', 'movieId'], keep='last')
+        ratings_duplicates_removed = ratings_before_dedup - len(ratings)
+        
+        # Remove ratings for orphaned movies
+        valid_movie_ids = set(movies['movieId'])
+        ratings_before_integrity = len(ratings)
+        ratings = ratings[ratings['movieId'].isin(valid_movie_ids)]
+        ratings_invalid_removed = ratings_before_integrity - len(ratings)
+        
+        final_movies_count = len(movies)
+        final_ratings_count = len(ratings)
+        
+        print("\n=== Data Cleaning & Quality Report ===")
+        print("Movies Validation:")
+        print(f"- Total records before cleaning: {initial_movies_count}")
+        print(f"- Duplicate records removed: {movies_duplicates_removed}")
+        print(f"- Invalid records removed: {initial_movies_count - final_movies_count - movies_duplicates_removed}")
+        print(f"- Remaining valid records: {final_movies_count}")
+        
+        print("\nRatings Validation:")
+        print(f"- Total records before cleaning: {initial_ratings_count}")
+        print(f"- Duplicate records removed: {ratings_duplicates_removed}")
+        print(f"- Invalid records removed: {ratings_invalid_removed}")
+        print(f"- Remaining valid records: {final_ratings_count}")
+        print("======================================\n")
+        
+        return movies, ratings
 
     def _build_knn_matrix(self, ratings, rating_stats):
         eligible = rating_stats[rating_stats["total_ratings"] >= self.min_votes_for_popular]
@@ -242,45 +304,152 @@ class MovieRecommender:
         years = self.movies_clean["year"][self.movies_clean["year"] != "Unknown"].astype(str).unique()
         return sorted([int(y) for y in years if y.isdigit()])
 
+    def get_genre_movie_count(self, selected_genres=None):
+        """Return the number of movies matching ALL selected genres (AND logic).
+        If no genres are selected, return the total movie count."""
+        if self.movies_clean is None:
+            return 0
+        if not selected_genres:
+            return len(self.movies_clean)
+        selected_lower = {str(g).strip().lower() for g in selected_genres if str(g).strip()}
+        if not selected_lower:
+            return len(self.movies_clean)
+
+        def has_all_genres(genres_str):
+            if not isinstance(genres_str, str):
+                return False
+            movie_genres = {g.strip().lower() for g in re.split(r"[,|]", genres_str) if g.strip()}
+            return selected_lower.issubset(movie_genres)
+
+        return int(self.movies_clean["genres"].apply(has_all_genres).sum())
+
     def recommend(self, movie_name=None, genre=None, min_rating=0.0, year_start=None, year_end=None, n_recommendations=5):
         recommendations = []
+        knn_total_candidates = 0
+        knn_filtered_candidates = 0
+        knn_recommended_ids = set()
+
+        # Normalize selected genres once
+        selected_lower = set()
+        if isinstance(genre, (list, tuple, set)) and len(genre) > 0:
+            selected_lower = {str(g).lower().strip() for g in genre if str(g).strip()}
+
+        # Pre-filter all movies according to criteria
+        filtered_movies = self._filter_movies(self.movies_clean.copy(), genre, min_rating, year_start, year_end)
+        valid_movie_ids = set(filtered_movies["movieId"].tolist())
 
         if movie_name and self.movie_features is not None and self.movie_features.shape[0] > 0:
             mid = self._find_movie_id(movie_name)
             if mid is not None and mid in self.knn_movie_id_set:
                 movie_idx = int(np.where(self.knn_movie_ids == mid)[0][0])
+
                 distances, indices = self.model_knn.kneighbors(
                     self.movie_features[movie_idx],
-                    n_neighbors=min(self.movie_features.shape[0], n_recommendations + 30),
+                    n_neighbors=self.movie_features.shape[0],
                 )
-                for idx in indices.flatten():
+
+                raw_recommendations = []
+                removed_count = 0
+
+                for i, idx in enumerate(indices.flatten()):
                     rec_mid = int(self.knn_movie_ids[idx])
                     if rec_mid == mid:
                         continue
-                    movie_details = self.movies_by_id.loc[rec_mid]
-                    if not self._passes_filters(movie_details, min_rating, genre, year_start, year_end):
+
+                    knn_total_candidates += 1
+
+                    # Pre-filter enforces strict validity
+                    if rec_mid not in valid_movie_ids:
+                        removed_count += 1
                         continue
+
+                    movie_details = self.movies_by_id.loc[rec_mid]
                     rec = self._movie_record(movie_details)
                     rec["reason"] = "Recommended using KNN similarity matching"
-                    recommendations.append(rec)
-                    if len(recommendations) >= n_recommendations:
+
+                    # Post-KNN AND validation: movie must contain ALL selected genres
+                    if selected_lower:
+                        movie_genres = self._split_genres(movie_details.get("genres", ""))
+                        movie_genres_lower = {g.lower().strip() for g in movie_genres}
+
+                        if not selected_lower.issubset(movie_genres_lower):
+                            removed_count += 1
+                            continue
+
+                        knn_filtered_candidates += 1
+                        # Reorder so matched genres appear first in UI
+                        matched = [g for g in movie_genres if g.lower().strip() in selected_lower]
+                        unmatched = [g for g in movie_genres if g.lower().strip() not in selected_lower]
+                        rec["genres"] = ", ".join(matched + unmatched)
+                        rec["reason"] = "Matches selected genres"
+                    else:
+                        knn_filtered_candidates += 1
+
+                    rec["_distance"] = float(distances.flatten()[i])
+                    raw_recommendations.append(rec)
+                    knn_recommended_ids.add(rec_mid)
+
+                    if len(raw_recommendations) >= n_recommendations:
                         break
 
-        if not recommendations:
-            filtered = self._filter_movies(self.movies_clean.copy(), genre, min_rating, year_start, year_end)
-            filtered = filtered[filtered["total_ratings"] >= self.min_votes_for_popular]
-            top_filtered = filtered.sort_values(["avg_rating", "total_ratings"], ascending=False).head(n_recommendations)
-            if genre or min_rating or year_start or year_end:
+                recommendations = raw_recommendations[:n_recommendations]
+                print(f"Total KNN candidates generated: {knn_total_candidates}")
+                print(f"Candidates after genre filtering: {knn_filtered_candidates}")
+                print(f"Final displayed results count: {len(recommendations)}")
+
+        # Fill from remaining valid matches when KNN results are insufficient
+        if len(recommendations) < n_recommendations:
+            remaining = n_recommendations - len(recommendations)
+            if selected_lower:
+                fallback = filtered_movies.copy()
+            else:
+                fallback = filtered_movies[filtered_movies["total_ratings"] >= self.min_votes_for_popular].copy()
+
+            fallback = fallback[~fallback["movieId"].isin(knn_recommended_ids)]
+
+            if selected_lower:
+                def reorder_genres(movie_genres_str):
+                    if not isinstance(movie_genres_str, str):
+                        return ""
+                    movie_genres = self._split_genres(movie_genres_str)
+                    matched = [g for g in movie_genres if g.lower().strip() in selected_lower]
+                    unmatched = [g for g in movie_genres if g.lower().strip() not in selected_lower]
+                    return ", ".join(matched + unmatched)
+
+                fallback["genres"] = fallback["genres"].apply(reorder_genres)
+
+            top_filtered = fallback.sort_values(["avg_rating", "total_ratings"], ascending=[False, False]).head(remaining)
+
+            if selected_lower:
+                reason = "Matches selected genres"
+            elif genre or min_rating or year_start or year_end:
                 reason = "Matches selected genre and rating filters"
             else:
                 reason = "Similar users highly rated this movie"
-            recommendations = self._records(top_filtered, reason=reason)
+
+            additional = self._records(top_filtered, reason=reason)
+            recommendations.extend(additional)
+            print(f"Final displayed results count: {len(recommendations)}")
 
         return recommendations
 
     def _filter_movies(self, movies, genre, min_rating, year_start, year_end):
         if genre:
-            movies = movies[movies["genres"].str.contains(re.escape(genre), case=False, na=False)]
+            if not isinstance(genre, (list, tuple, set)):
+                genre = [genre]
+            
+            # AND match: movie must contain ALL selected genres
+            selected_lower = {str(g).strip().lower() for g in genre if str(g).strip()}
+            
+            if selected_lower:
+                def has_all_genres(genres_str):
+                    if not isinstance(genres_str, str):
+                        return False
+                    movie_genres = {g.strip().lower() for g in re.split(r"[,|]", genres_str) if g.strip()}
+                    return selected_lower.issubset(movie_genres)
+
+                movies = movies[movies["genres"].apply(has_all_genres)]
+                
         if min_rating:
             movies = movies[movies["avg_rating"] >= float(min_rating)]
         if year_start:
@@ -311,10 +480,20 @@ class MovieRecommender:
             "year": row.get("year", "Unknown"),
             "avg_rating": round(float(row.get("avg_rating", 0)), 1),
             "total_ratings": int(row.get("total_ratings", 0)),
+            "imdbId": row.get("imdbId", ""),
+            "tmdbId": row.get("tmdbId", ""),
             "imdb_link": row.get("imdb_link", "#"),
             "trailer_url": self._youtube_trailer_search_url(row.get("title", ""), row.get("year", "Unknown")),
             "poster_url": row.get("poster_url", ""),
         }
+
+    def get_movie_by_id(self, movie_id):
+        if self.movies_by_id is None:
+            return None
+        try:
+            return self._movie_record(self.movies_by_id.loc[int(movie_id)])
+        except (KeyError, TypeError, ValueError):
+            return None
 
     def _build_lookup_tables(self):
         self.movieid_to_title = self.movies_clean.set_index("movieId")["title"].to_dict()
@@ -461,5 +640,4 @@ class MovieRecommender:
     def _poster_for_movie(self, row):
         if "poster_url" in row and pd.notna(row.get("poster_url")) and str(row.get("poster_url")).strip():
             return row.get("poster_url")
-        first_genre = self._split_genres(row.get("genres", ""))
-        return self._genre_image(first_genre[0] if first_genre else "")
+        return f"/poster/{int(row.get('movieId'))}.svg"

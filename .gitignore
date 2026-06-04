@@ -1,0 +1,13 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Dataset and preprocessing cache
+cache/
+
+# Editor and system files
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

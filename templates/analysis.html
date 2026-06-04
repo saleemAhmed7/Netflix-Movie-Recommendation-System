@@ -4,7 +4,8 @@
 <div class="container pt-5 mt-5 pb-5">
     <div class="mb-5 pb-3 border-bottom border-secondary" data-aos="fade-down">
         <h2 class="section-title text-white">{{ t('Dataset Analysis') }} &amp; Statistics</h2>
-        <p class="section-description fs-5">A deep dive into the MovieLens data used to train the KNN Recommendation Model.</p>
+        <p class="section-description fs-5">A deep dive into the MovieLens data used to train the KNN Recommendation
+            Model.</p>
     </div>
 
     <!-- Stats Cards -->
@@ -32,7 +33,8 @@
     <!-- Netflix Rows -->
     <div class="netflix-row" data-aos="fade-up">
         <div class="netflix-row-header">
-            <h3 class="netflix-row-title"><i class="fa-solid fa-trophy text-warning me-2"></i> {{ t('Top Rated Movies') }}</h3>
+            <h3 class="netflix-row-title"><i class="fa-solid fa-trophy text-warning me-2"></i> {{ t('Top Rated Movies')
+                }}</h3>
             <div class="slider-controls" aria-label="Top Rated Movies slider controls">
                 <button class="slider-nav-btn slider-nav-prev" type="button" aria-label="Scroll Top Rated Movies left">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -48,107 +50,125 @@
             <div class="slider-item">
                 <div class="movie-card shadow">
                     <div class="movie-poster-container">
-                        {% if loop.index <= 10 %}
-                        <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{ loop.index }}</div>
-                        {% endif %}
-                        <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop' }}" class="movie-poster" alt="{{ movie.title }} poster">
-                        <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
-                        <div class="movie-overlay d-flex flex-column justify-content-end">
-                            <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-danger">{{ movie.year }}</span>
-                                <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating }}</span>
-                            </div>
-                            <div class="mb-2">
-                                {% set genres_list = movie.genres.split(', ') %}
-                                {% for genre in genres_list[:2] %}
-                                <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
-                                {% endfor %}
-                            </div>
-                            <div class="movie-actions">
-                                <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb" aria-label="Open {{ movie.title }} on IMDb">
-                                    <i class="fa-brands fa-imdb"></i> IMDb
-                                </a>
-                                <a href="{{ movie.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer" aria-label="Search {{ movie.title }} trailer on YouTube">
-                                    <i class="fa-solid fa-play"></i> Trailer
-                                </a>
-                            </div>
-                            <small class="text-white opacity-75">{{ movie.total_ratings }} Votes</small>
+                        {% if loop.index <= 10 %} <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{
+                            loop.index }}</div>
+                    {% endif %}
+                    <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop' }}"
+                        class="movie-poster" alt="{{ movie.title }} poster" data-title="{{ movie.title }}"
+                        data-year="{{ movie.year }}"
+                        data-genre="{{ movie.genres.split(', ')[0] if movie.genres else 'Movie' }}"
+                        data-rating="{{ movie.avg_rating }}">
+                    <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
+                    <div class="movie-overlay d-flex flex-column justify-content-end">
+                        <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-danger">{{ movie.year }}</span>
+                            <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating
+                                }}</span>
                         </div>
+                        <div class="mb-2">
+                            {% set genres_list = movie.genres.split(', ') %}
+                            {% for genre in genres_list[:2] %}
+                            <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="movie-actions">
+                            <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb"
+                                aria-label="Open {{ movie.title }} on IMDb">
+                                <i class="fa-brands fa-imdb"></i> IMDb
+                            </a>
+                            <a href="{{ movie.trailer_url }}" target="_blank"
+                                class="movie-action-btn movie-action-trailer"
+                                aria-label="Search {{ movie.title }} trailer on YouTube">
+                                <i class="fa-solid fa-play"></i> Trailer
+                            </a>
+                        </div>
+                        <small class="text-white opacity-75">{{ movie.total_ratings }} Votes</small>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-            {% else %}
-            <div class="slider-empty glass-card p-4 text-center w-100">
-                <p class="mb-0 text-white">No top-rated movies are available yet.</p>
-            </div>
-            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="slider-empty glass-card p-4 text-center w-100">
+            <p class="mb-0 text-white">No top-rated movies are available yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="netflix-row mt-5" data-aos="fade-up" data-aos-delay="100">
+    <div class="netflix-row-header">
+        <h3 class="netflix-row-title"><i class="fa-solid fa-fire text-danger me-2"></i> {{ t('Trending Now (Most
+            Popular)') }}</h3>
+        <div class="slider-controls" aria-label="Trending Now slider controls">
+            <button class="slider-nav-btn slider-nav-prev" type="button" aria-label="Scroll Trending Now left">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="slider-nav-btn slider-nav-next" type="button" aria-label="Scroll Trending Now right">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
     </div>
-
-    <div class="netflix-row mt-5" data-aos="fade-up" data-aos-delay="100">
-        <div class="netflix-row-header">
-            <h3 class="netflix-row-title"><i class="fa-solid fa-fire text-danger me-2"></i> {{ t('Trending Now (Most Popular)') }}</h3>
-            <div class="slider-controls" aria-label="Trending Now slider controls">
-                <button class="slider-nav-btn slider-nav-prev" type="button" aria-label="Scroll Trending Now left">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-                <button class="slider-nav-btn slider-nav-next" type="button" aria-label="Scroll Trending Now right">
-                    <i class="fa-solid fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-        <div class="netflix-slider ranked-slider" id="trendingSlider">
-            {% for movie in stats.most_rated %}
-            <div class="slider-item">
-                <div class="movie-card shadow">
-                    <div class="movie-poster-container">
-                        {% if loop.index <= 10 %}
-                        <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{ loop.index }}</div>
-                        {% endif %}
-                        <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' }}" class="movie-poster" alt="{{ movie.title }} poster">
-                        <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
-                        <div class="movie-overlay d-flex flex-column justify-content-end">
-                            <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-danger">{{ movie.year }}</span>
-                                <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating }}</span>
-                            </div>
-                            <div class="mb-2">
-                                {% set genres_list = movie.genres.split(', ') %}
-                                {% for genre in genres_list[:2] %}
-                                <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
-                                {% endfor %}
-                            </div>
-                            <div class="movie-actions">
-                                <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb" aria-label="Open {{ movie.title }} on IMDb">
-                                    <i class="fa-brands fa-imdb"></i> IMDb
-                                </a>
-                                <a href="{{ movie.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer" aria-label="Search {{ movie.title }} trailer on YouTube">
-                                    <i class="fa-solid fa-play"></i> Trailer
-                                </a>
-                            </div>
-                            <small class="text-white opacity-75" style="color: var(--accent-blue) !important;">{{ movie.total_ratings }} Votes</small>
-                        </div>
+    <div class="netflix-slider ranked-slider" id="trendingSlider">
+        {% for movie in stats.most_rated %}
+        <div class="slider-item">
+            <div class="movie-card shadow">
+                <div class="movie-poster-container">
+                    {% if loop.index <= 10 %} <div class="movie-rank-badge" aria-label="Rank {{ loop.index }}">#{{
+                        loop.index }}</div>
+                {% endif %}
+                <img src="{{ movie.poster_url if movie.poster_url else 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&auto=format&fit=crop' }}"
+                    class="movie-poster" alt="{{ movie.title }} poster" data-title="{{ movie.title }}"
+                    data-year="{{ movie.year }}"
+                    data-genre="{{ movie.genres.split(', ')[0] if movie.genres else 'Movie' }}"
+                    data-rating="{{ movie.avg_rating }}">
+                <div class="imdb-glow-icon"><i class="fa-brands fa-imdb"></i></div>
+                <div class="movie-overlay d-flex flex-column justify-content-end">
+                    <h5 class="movie-title text-truncate" title="{{ movie.title }}">{{ movie.title }}</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-danger">{{ movie.year }}</span>
+                        <span class="text-warning fw-bold"><i class="fa-solid fa-star me-1"></i>{{ movie.avg_rating
+                            }}</span>
                     </div>
+                    <div class="mb-2">
+                        {% set genres_list = movie.genres.split(', ') %}
+                        {% for genre in genres_list[:2] %}
+                        <span class="badge badge-genre" style="font-size: 0.7rem;">{{ genre }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="movie-actions">
+                        <a href="{{ movie.imdb_link }}" target="_blank" class="movie-action-btn movie-action-imdb"
+                            aria-label="Open {{ movie.title }} on IMDb">
+                            <i class="fa-brands fa-imdb"></i> IMDb
+                        </a>
+                        <a href="{{ movie.trailer_url }}" target="_blank" class="movie-action-btn movie-action-trailer"
+                            aria-label="Search {{ movie.title }} trailer on YouTube">
+                            <i class="fa-solid fa-play"></i> Trailer
+                        </a>
+                    </div>
+                    <small class="text-white opacity-75" style="color: var(--accent-blue) !important;">{{
+                        movie.total_ratings }} Votes</small>
                 </div>
             </div>
-            {% endfor %}
         </div>
     </div>
+    {% endfor %}
+</div>
+</div>
 
-    <!-- Chart Section -->
-    <div class="row mt-5">
-        <div class="col-12" data-aos="fade-up">
-            <div class="glass-card p-4">
-                <h4 class="mb-4 text-white"><i class="fa-solid fa-chart-bar text-info me-2"></i> Top 10 Genres Distribution</h4>
-                <div style="height: 400px; width: 100%;">
-                    <canvas id="genreChart"></canvas>
-                </div>
+<!-- Chart Section -->
+<div class="row mt-5">
+    <div class="col-12" data-aos="fade-up">
+        <div class="glass-card p-4">
+            <h4 class="mb-4 text-white"><i class="fa-solid fa-chart-bar text-info me-2"></i> Top 10 Genres Distribution
+            </h4>
+            <div style="height: 400px; width: 100%;">
+                <canvas id="genreChart"></canvas>
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
 
@@ -244,6 +264,30 @@
 
         previousButton.addEventListener('click', () => scrollSlider(-1));
         nextButton.addEventListener('click', () => scrollSlider(1));
+    });
+
+    document.querySelectorAll('.movie-poster').forEach((image) => {
+        const handleError = function () {
+            const card = image.closest('.slider-item');
+            if (card) {
+                const slider = card.closest('.ranked-slider');
+                card.remove();
+
+                if (slider) {
+                    slider.querySelectorAll('.movie-rank-badge').forEach((badge, index) => {
+                        badge.textContent = '#' + (index + 1);
+                        badge.setAttribute('aria-label', 'Rank ' + (index + 1));
+                    });
+                }
+            }
+        };
+
+        image.addEventListener('error', handleError);
+
+        // Trigger error manually if image failed to load before JS attached
+        if (image.complete && image.naturalWidth === 0) {
+            handleError();
+        }
     });
 </script>
 {% endblock %}
